@@ -28,7 +28,11 @@ func main() {
 			}
 		}
 	}()
-	if err := ssh.Exec("dnf install -y git", output, errors); err != nil {
+	if err := ssh.ExecMany([]string{
+		"podman run -d --name Redis-01 redis",
+		"podman ps",
+		"pwd",
+	}, output, errors); err != nil {
 		panic(err)
 	}
 	running = false

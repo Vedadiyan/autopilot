@@ -142,3 +142,11 @@ func (ssh *SSH) Exec(command string, output chan<- string, errors chan string) e
 	}
 	return nil
 }
+func (ssh *SSH) ExecMany(commands []string, output chan<- string, errors chan string) error {
+	for _, command := range commands {
+		if err := ssh.Exec(command, output, errors); err != nil {
+			return err
+		}
+	}
+	return nil
+}
