@@ -1,17 +1,13 @@
 pull: 
 - test -d /repos && echo "/repos already exists" || mkdir /repos
-- cd /repos
-- test -d $PROJECT && echo "/repos/$PROJECT alredy exists" || git clone $REPOSITORY
-- cd $PROJECT 
-- cd git pull
+- test -d /repos/$PROJECT && echo "/repos/$PROJECT alredy exists" || git clone $REPOSITORY
+- git -C /repos/$PROJECT pull
 build:
-- cd /repos/$PROJECT
-- test -d release && rm -rf release || echo "/release not found" 
+- test -d /repos/$PROJECT/release && rm -rf /repos/$PROJECT/release || echo "/repos/$PROJECT/release not found" 
 - go-painless restore
-- go build -o release cmd/main.go
-- cp Dockerfile release/
-- cd release
-- podman build $PROJECT:$TAG .
+- go build -o /repos/$PROJECT/release cmd/main.go
+- cp /repos/$PROJECT/Dockerfile /repos/$PROJECT/release/
+- podman build $PROJECT:$TAG /repos/$PROJECT/release/.
 transfer: 
 - test -d /images && echo "/images already exists" || mkdir /images
 - podman save -o /images $PROJECT:TAG
