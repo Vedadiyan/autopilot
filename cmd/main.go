@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	ssh := ssh.New("45.77.39.116", 22, "root", "Pou9617!")
+	ssh := ssh.New("45.77.39.116", 22, "root", "******")
 	if err := ssh.Connect(); err != nil {
 		panic(err)
 	}
@@ -29,7 +29,7 @@ func main() {
 		}
 	}()
 	if err := ssh.ExecMany([]string{
-		"podman run -d --name Redis-01 redis",
+		"podman rm --force Redis-01",
 		"podman ps",
 		"pwd",
 	}, output, errors); err != nil {
