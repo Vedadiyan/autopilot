@@ -1,0 +1,29 @@
+pull: 
+- test -d /repos && echo "/repos already exists" || mkdir /repos
+- cd /repos
+- test -d $PROJECT && echo "/repos/$PROJECT alredy exists" || git clone $REPOSITORY
+- cd $PROJECT 
+- cd git pull
+build:
+- cd /repos/$PROJECT
+- test -d release && rm -rf release || echo "/release not found" 
+- go-painless restore
+- go build -o release cmd/main.go
+- cp Dockerfile release/
+- cd release
+- podman build $PROJECT:$TAG .
+transfer: 
+- test -d /images && echo "/images already exists" || mkdir /images
+- podman save -o /images $PROJECT:TAG
+- cd /images
+- scp -i /keys/$SERVER.pem -p /images/$PROJECT:$TAG $USER@$HOST:/images
+deploy: 
+- ssh -i /keys/$SERVER.pem $USER@$HOST
+- podman load -i /images/$PROJECT:$TAG
+- podman inspect $NAME && podman rm --force $NAME || echo "$NAME not found"
+- podman run -d $CONFIGURATION --name $NAME $PROJECT:$TAG
+- podman generate systemd -o /etc/systemd/system --files
+- chmod 777 /etc/systemd/system/container-$NAME.service
+- /sbin/restorecon -v /etc/systemd/system/container-$NAME.service
+- systemctl enable /etc/systemd/system/container-$NAME.service
+- exit
