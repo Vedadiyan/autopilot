@@ -1,0 +1,58 @@
+package {{ .Package | ToLowerCase }}
+
+import (
+	"fmt"
+	"log"
+	"sync"
+    
+    autogen "{{ .ImportPath }}"
+	"github.com/nats-io/nats.go"
+    insight "github.com/vedadiyan/gaol/pkg/insight"
+)
+
+var (
+    conn *nats.EncodedConn
+    handler func(rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response  | ToPascalCase }}, error)
+    initialize func()
+    _once sync.Once
+)
+
+//go:generate autopilot microservice init -s {{ .Service | ToPascalCase }} --function-name Create{{ .Service | ToPascalCase }} --import-path $GOGEN_PACKAGE
+func Create{{ .Service | ToPascalCase }}() (*nats.Subscription, error) {
+    var subs *nats.Subscription
+    var err error
+    _once.Do(func() {
+        if initialize != nil { 
+            initialize()
+        }
+        if conn == nil { 
+            err = fmt.Errorf("nats connection for {{ .Service }} has not been initialized")
+            return
+        }
+        subs, err = autogen.{{ .Service }}Server(conn, microservice, logger)
+    })
+    return subs, err
+}
+
+func logger(err error) {
+    log.Println(err)
+}
+
+//go:generate autopilot microservice implement -s {{ .Service }} --request {{ .Request | ToPascalCase}} --response {{ .Response | ToPascalCase }} --type "microservice-handler" --package {{ .Package }} --import-path {{ .ImportPath }} 
+func microservice(rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response | ToPascalCase }}, error) { 
+    //automatically monitors, logs, and safeguards the microservice
+    ictx := insight.New[autogen.SearchRes]()
+	defer ictx.Recover()
+    ictx.Start(rq)
+    if handler == nil { 
+        return ictx.Error(fmt.Errorf("no handler for {{ .Service }} has been registered"))
+    }
+    res, err := handler(rq)
+    if err != nil {
+        errorRs := autogen.{{ .Response }}{
+            Error: err.Error(),
+        }
+        return ictx.Interrupt(errorRs)
+    }
+    return ictx.Complete(res)
+}

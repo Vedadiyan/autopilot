@@ -1,0 +1,42 @@
+package {{ .Package | ToLowerCase }}
+
+import (
+	"log"
+	autogen "{{ .ImportPath }}"
+	"testing"
+)
+
+var (
+    mockRq func()(*autogen.{{ .Request | ToPascalCase }})    
+    assertRs func(rs autogen.{{ .Response | ToPascalCase }}) error
+)
+
+func TestServer(t *testing.T) {
+    _, err := Create{{ .Service | ToPascalCase }}()
+    if err != nil {
+        log.Println(err.Error())
+        t.FailNow()
+    }
+}
+
+func TestMicroservice(t *testing.T) { 
+    if mockRq == nil {
+        log.Println("no mock implemented for {{ .Service }}")
+        t.FailNow()
+    }
+    if assertRs == nil { 
+        log.Println("no assertion implemented for {{ .Service }}")
+        t.FailNow()    
+    }
+    rq := mockRq()
+    res, err := microservice(rq)
+    if err != nil {
+        log.Println(err.Error()) 
+        t.FailNow()
+    }
+    err = assertRs(*res)
+    if err != nil {
+        log.Println(err.Error()) 
+        t.FailNow()
+    }
+}

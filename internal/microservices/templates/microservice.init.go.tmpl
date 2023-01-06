@@ -1,0 +1,14 @@
+package main 
+
+import "github.com/nats-io/nats.go"
+
+var (
+    _microservices []func()(*nats.Subscription, error)    
+)
+
+func init() {
+    _microservices = []func()(*nats.Subscription, error) {
+
+    }
+}
+

@@ -1,0 +1,47 @@
+package {{ .Package | ToLowerCase }}
+
+import (
+    "strings"
+    autogen "{{ .ImportPath }}"
+    proton "github.com/vedadiyan/proton"
+)
+
+var (
+    defaultHeaders func() map[string]any    
+)
+
+func init() { 
+    handler = fn
+}
+
+func fn (rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response  | ToPascalCase }}, error) {
+    toMap, err := proton.Marshall(rq)
+    if err != nil {
+        return nil, err
+    }
+    _rq := make(map[string]any)
+    q := make(map[string]string)
+    for k, v := range toMap {
+        if strings.HasPrefix(k, "$") {
+            if value, ok := v.(string); ok {
+                q[strings.TrimPrefix(k, "$")] = value
+                continue
+            }
+        }
+        _rq[k] = v
+    }
+    var headers map[string]any
+    if defaultHeaders != nil {
+        headers = defaultHeaders()
+    }
+    res, err := autogen.{{ .Service | ToPascalCase }}Client(headers, _rq, q)
+    if err != nil {
+        return nil, err
+    }        
+    var fromMap autogen.{{ .Response  | ToPascalCase }}
+    err = proton.Unmarshal(res, &fromMap)
+    if err != nil {
+        return nil, err
+    }
+    return &fromMap, nil
+}
