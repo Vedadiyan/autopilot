@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	flaggy "github.com/vedadiyan/flaggy/pkg"
@@ -8,5 +9,8 @@ import (
 
 func main() {
 	options := Options{}
-	flaggy.Parse(&options, os.Args[1:])
+	err := flaggy.Parse(&options, os.Args[1:])
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }

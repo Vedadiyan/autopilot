@@ -1,0 +1,45 @@
+package {{ .Package | ToLowerCase }}
+
+import (
+    "encoding/json"
+	"io"
+	"strings"
+
+    http "github.com/vedadiyan/goal/pkg/http"
+)
+
+var (
+{{- range $x := .Clients }}
+    _{{ $x.Name | ToCamelCase}}Headers      http.IWebHeaderCollection
+{{- end }}
+)
+{{- range $x := .Clients }}
+func {{ $x.Name }}DefaultHeaders(m map[string]string) {
+    _{{ $x.Name | ToCamelCase}}Headers = http.NewWebHeaderCollection() 
+}
+
+func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[string]string) (map[string]any, error) {
+    url := http.Url("{{ $x.URL }}", q)
+    var request io.ReadCloser
+
+    if rq != nil {
+        json, err := json.Marshal(rq)
+        if err != nil { 
+            return nil, err
+        }
+        request = io.NopCloser(strings.NewReader(string(json)))
+    }
+
+    res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request)
+    if err != nil { 
+        return nil, err
+    }
+    decoder := json.NewDecoder(res.Reader())
+    response := make(map[string]any)
+    err = decoder.Decode(&response)
+    if err != nil { 
+        return nil, err
+    }
+    return response, nil
+}
+{{- end }}

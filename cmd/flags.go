@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/vedadiyan/autopilot/internal/httpclient"
 	"github.com/vedadiyan/autopilot/internal/microservices"
 	flaggy "github.com/vedadiyan/flaggy/pkg"
 	getup "github.com/vedadiyan/getup/pkg"
@@ -11,6 +12,7 @@ import (
 
 type Options struct {
 	Microservice microservices.Microservice `long:"microservice" short:"" help:"Automatically generates a microservice"`
+	HttpClient   httpclient.HttpClient      `long:"httpclient" short:"" help:"Automatically generates an HttpClient"`
 	Setup        bool                       `long:"setup" short:"" help:"Setups autopilot in the system"`
 }
 
