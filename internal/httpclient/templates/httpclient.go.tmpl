@@ -14,14 +14,16 @@ var (
 {{- end }}
 )
 {{- range $x := .Clients }}
+{{- if not $x.ContentType }}
+    {{- continue }}
+{{- end }}
 func {{ $x.Name }}DefaultHeaders(m map[string]string) {
     _{{ $x.Name | ToCamelCase}}Headers = http.NewWebHeaderCollection() 
 }
-
+{{- if eq $x.ContentType "application/json"}}
 func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[string]string) (map[string]any, error) {
     url := http.Url("{{ $x.URL }}", q)
     var request io.ReadCloser
-
     if rq != nil {
         json, err := json.Marshal(rq)
         if err != nil { 
@@ -29,7 +31,6 @@ func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[str
         }
         request = io.NopCloser(strings.NewReader(string(json)))
     }
-
     res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request)
     if err != nil { 
         return nil, err
@@ -42,4 +43,36 @@ func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[str
     }
     return response, nil
 }
+{{- else if eq $x.ContentType "graphql" }}
+func {{ $x.Name }}Client(headers map[string]string, rq map[string]any) (map[string]any, error) {
+    url := http.Url("{{ $x.URL }}", nil)
+    var request io.ReadCloser
+    if rq != nil {
+        json, err := json.Marshal(rq)
+        if err != nil { 
+            return nil, err
+        }
+        rq = map[string]string {
+            "query": `{{ $x.Query }}`,
+            "variables": json,
+        }
+        json, err = json.Marshal(rq)
+        if err != nil { 
+            return nil, err
+        }
+        request = io.NopCloser(strings.NewReader(string(json)))
+    }
+    res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request)
+    if err != nil { 
+        return nil, err
+    }
+    decoder := json.NewDecoder(res.Reader())
+    response := make(map[string]any)
+    err = decoder.Decode(&response)
+    if err != nil { 
+        return nil, err
+    }
+    return response, nil
+}
+{{- end }}
 {{- end }}

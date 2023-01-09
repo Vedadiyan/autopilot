@@ -22,6 +22,7 @@ type Client struct {
 	ContentType string
 	Method      string
 	URL         string
+	Query       string
 }
 
 type ClientContext struct {
@@ -32,6 +33,7 @@ type ClientContext struct {
 type HttpClient struct {
 	FileName  string `long:"--filename" short:"-f" help:"Path to the Postman collection file"`
 	OutputDir string `long:"--output-dir" short:"-o" help:"Output directory"`
+	Package   string `long:"--package" short:"-p" help:"Name of the package"`
 }
 
 func (h HttpClient) Run() error {
@@ -47,10 +49,21 @@ func (h HttpClient) Run() error {
 	clients := make([]Client, 0)
 	for _, item := range model.Item {
 		var contentType string
-		for _, header := range item.Request.Header {
-			if strings.ToLower(header.Key) == "content-type" {
-				contentType = header.Value
-				break
+		var query string
+		switch strings.ToLower(item.Request.Body.Options.Raw.Language) {
+		case "json":
+			{
+				contentType = "application/json"
+			}
+		default:
+			{
+				if item.Request.Body.Mode == "graphql" {
+					contentType = "graphql"
+					query = item.Request.Body.Graphql.Query
+					query = strings.ReplaceAll(query, "\r", "\\r")
+					query = strings.ReplaceAll(query, "\n", "\\n")
+
+				}
 			}
 		}
 		client := Client{
@@ -58,6 +71,7 @@ func (h HttpClient) Run() error {
 			ContentType: contentType,
 			Method:      item.Request.Method,
 			URL:         item.Request.URL.Raw,
+			Query:       query,
 		}
 		clients = append(clients, client)
 	}
@@ -66,7 +80,7 @@ func (h HttpClient) Run() error {
 		return err
 	}
 	clientContext := ClientContext{
-		Package: "test",
+		Package: h.Package,
 		Clients: clients,
 	}
 	var output bytes.Buffer
