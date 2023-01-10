@@ -41,7 +41,7 @@ func fn (rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response  | To
         return nil, err
     }        
     var fromMap autogen.{{ .Response  | ToPascalCase }}
-    err = unmarshaller.Unmarshal(res, &fromMap)
+    err = unmarshaller.Unmarshall(res, &fromMap)
     if err != nil {
         return nil, err
     }
