@@ -19,9 +19,20 @@ type Init struct {
 }
 
 func (i Init) Run() error {
-	target := fmt.Sprintf("%s/a.microservice.go", os.Getenv("GOGEN_TARGET"))
+	wd := fmt.Sprintf("%s/cmd", os.Getenv("GOGEN_WD"))
+	exists, err := Exists(wd)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		err := os.MkdirAll(wd, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+	target := fmt.Sprintf("%s/a.microservice.go", wd)
 	fmt.Println(i.ImportPath)
-	exists, err := Exists(target)
+	exists, err = Exists(target)
 	if err != nil {
 		return err
 	}

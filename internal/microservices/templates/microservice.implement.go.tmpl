@@ -3,11 +3,12 @@ package {{ .Package | ToLowerCase }}
 import (
     "strings"
     autogen "{{ .ImportPath }}"
+    client "{{ .ClientPath }}"
     proton "github.com/vedadiyan/proton"
 )
 
 var (
-    defaultHeaders func() map[string]any    
+    defaultHeaders func() map[string]string    
 )
 
 func init() { 
@@ -30,11 +31,11 @@ func fn (rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response  | To
         }
         _rq[k] = v
     }
-    var headers map[string]any
+    var headers map[string]string
     if defaultHeaders != nil {
         headers = defaultHeaders()
     }
-    res, err := autogen.{{ .Service | ToPascalCase }}Client(headers, _rq, q)
+    res, err := client.{{ .Service | ToPascalCase }}Client(headers, _rq, q)
     if err != nil {
         return nil, err
     }        

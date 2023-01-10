@@ -25,11 +25,11 @@ func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[str
     url := http.Url("{{ $x.URL }}", q)
     var request io.ReadCloser
     if rq != nil {
-        json, err := json.Marshal(rq)
+        j, err := json.Marshal(rq)
         if err != nil { 
             return nil, err
         }
-        request = io.NopCloser(strings.NewReader(string(json)))
+        request = io.NopCloser(strings.NewReader(string(j)))
     }
     res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request)
     if err != nil { 
@@ -44,23 +44,23 @@ func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[str
     return response, nil
 }
 {{- else if eq $x.ContentType "graphql" }}
-func {{ $x.Name }}Client(headers map[string]string, rq map[string]any) (map[string]any, error) {
+func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, _ map[string]string) (map[string]any, error) {
     url := http.Url("{{ $x.URL }}", nil)
     var request io.ReadCloser
     if rq != nil {
-        json, err := json.Marshal(rq)
+        j, err := json.Marshal(rq)
         if err != nil { 
             return nil, err
         }
-        rq = map[string]string {
+        rq = map[string]any {
             "query": `{{ $x.Query }}`,
-            "variables": json,
+            "variables": j,
         }
-        json, err = json.Marshal(rq)
+        j, err = json.Marshal(rq)
         if err != nil { 
             return nil, err
         }
-        request = io.NopCloser(strings.NewReader(string(json)))
+        request = io.NopCloser(strings.NewReader(string(j)))
     }
     res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request)
     if err != nil { 

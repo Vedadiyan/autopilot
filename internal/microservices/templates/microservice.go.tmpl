@@ -17,7 +17,7 @@ var (
     _once sync.Once
 )
 
-//go:generate autopilot microservice init -s {{ .Service | ToPascalCase }} --function-name Create{{ .Service | ToPascalCase }} --import-path $GOGEN_PACKAGE
+//go:generate autopilot microservice init -s {{ .Service | ToPascalCase }} --function-name Create{{ .Service | ToPascalCase }} --import-path $GOGEN_MAIN
 func Create{{ .Service | ToPascalCase }}() (*nats.Subscription, error) {
     var subs *nats.Subscription
     var err error
