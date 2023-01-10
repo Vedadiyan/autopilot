@@ -4,7 +4,8 @@ import (
     "strings"
     autogen "{{ .ImportPath }}"
     client "{{ .ClientPath }}"
-    proton "github.com/vedadiyan/proton"
+	marshaller "github.com/vedadiyan/proton/pkg/marshaller"
+	unmarshaller "github.com/vedadiyan/proton/pkg/unmarshaller"
 )
 
 var (
@@ -16,7 +17,7 @@ func init() {
 }
 
 func fn (rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response  | ToPascalCase }}, error) {
-    toMap, err := proton.Marshall(rq)
+    toMap, err := marshaller.Marshall(rq)
     if err != nil {
         return nil, err
     }
@@ -40,7 +41,7 @@ func fn (rq *autogen.{{ .Request | ToPascalCase }}) (*autogen.{{ .Response  | To
         return nil, err
     }        
     var fromMap autogen.{{ .Response  | ToPascalCase }}
-    err = proton.Unmarshal(res, &fromMap)
+    err = unmarshaller.Unmarshal(res, &fromMap)
     if err != nil {
         return nil, err
     }
