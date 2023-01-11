@@ -1,6 +1,11 @@
 package main 
 
-import "github.com/nats-io/nats.go"
+import (
+    "log" 
+
+    "github.com/nats-io/nats.go"
+	rt "github.com/vedadiyan/goal/pkg/runtime"
+)
 
 var (
     _microservices []func()(*nats.Subscription, error)    
@@ -12,3 +17,23 @@ func init() {
     }
 }
 
+func Start(cb func()) error {
+	subscriptions := make([]*nats.Subscription, 0)
+	for _, microservice := range _microservices {
+		subs, err := microservice()
+		if err != nil {
+			return err
+		}
+		subscriptions = append(subscriptions, subs)
+	}
+	rt.WaitForInterrupt(func() {
+		for _, subs := range subscriptions {
+			err := subs.Unsubscribe()
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
+		cb()
+	})
+	return nil
+}
