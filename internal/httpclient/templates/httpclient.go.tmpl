@@ -10,7 +10,8 @@ import (
 
 var (
 {{- range $x := .Clients }}
-    _{{ $x.Name | ToCamelCase}}Headers      http.IWebHeaderCollection
+    _{{ $x.Name | ToCamelCase }}Headers      http.IWebHeaderCollection
+    _{{ $x.Name | ToCamelCase }}Cache        *http.CacheOption
 {{- end }}
 )
 {{- range $x := .Clients }}
@@ -20,9 +21,19 @@ var (
 func {{ $x.Name }}DefaultHeaders(m map[string]string) {
     _{{ $x.Name | ToCamelCase}}Headers = http.NewWebHeaderCollection() 
 }
+func {{ $x.Name }}EnableCache(b bool) { 
+    if b { 
+        *_{{ $x.Name | ToCamelCase }}Cache = http.FETCH_OPTION_CACHED
+        return  
+    }
+    _{{ $x.Name | ToCamelCase }}Cache = nil
+}
+func {{ $x.Name }}URL() string {
+    return "{{ $x.URL }}"
+}
 {{- if eq $x.ContentType "application/json"}}
 func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[string]string) (map[string]any, error) {
-    url := http.Url("{{ $x.URL }}", q)
+    url := http.Url({{ $x.Name }}URL(), q)
     var request io.ReadCloser
     if rq != nil {
         j, err := json.Marshal(rq)
@@ -45,7 +56,7 @@ func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, q map[str
 }
 {{- else if eq $x.ContentType "graphql" }}
 func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, _ map[string]string) (map[string]any, error) {
-    url := http.Url("{{ $x.URL }}", nil)
+    url := http.Url({{ $x.Name }}URL(), nil)
     var request io.ReadCloser
     if rq != nil {
         j, err := json.Marshal(rq)
@@ -62,7 +73,7 @@ func {{ $x.Name }}Client(headers map[string]string, rq map[string]any, _ map[str
         }
         request = io.NopCloser(strings.NewReader(string(j)))
     }
-    res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request)
+    res, err := http.Send(url, _{{ $x.Name | ToCamelCase}}Headers, http.{{ $x.Method }}, request, _{{ $x.Name | ToCamelCase }}Cache)
     if err != nil { 
         return nil, err
     }
